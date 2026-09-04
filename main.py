@@ -1,8 +1,17 @@
 from modules.pdf_loader import load_pdfs
+from modules.chunker import chunks_documents
 
 documents = load_pdfs("documents")
-print("Total Documents:",len(documents))
 
-for document in documents:
-    print("\nSource", document["source"])
-    print("Characters",len(document["text"]))
+chunks = chunks_documents(documents)
+
+print("Total Documents:",len(documents))
+print("Total chunks:", len(chunks))
+
+print("\nFirst 5 Chunks:\n")
+
+for index, chunk in enumerate(chunks[:5]):
+    print(f"Chunk {index + 1}")
+    print(f"Source: {chunk['source']}")
+    print(chunk["text"])
+    print("-" * 60)
