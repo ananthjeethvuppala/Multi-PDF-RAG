@@ -3,6 +3,8 @@ from modules.chunker import chunks_documents
 from modules.embedder import create_embeddings, create_query_embeddings
 from modules.faiss_index import create_faiss_index
 from modules.retriever import retrieve_chunk
+from modules.prompts import create_prompt
+from modules.llm import generate_answer
 
 documents = load_pdfs("documents")
 
@@ -23,11 +25,38 @@ results = retrieve_chunk(
     top_k=3
 )
 
-print("\nQuery:", query)
-print("\nRetrieved Results:\n")
+context = ""
 
 for result in results:
-    print("Source:", result["source"])
-    print("Distance:", result["distance"])
-    print("Text:", result["text"][:300])
-    print("-" * 60)
+    context += f"""
+Source: {result["source"]}
+
+{result["text"]}
+
+---------------------------------------------------------------------
+"""
+
+prompt = create_prompt(context, query)
+
+answer = generate_answer(prompt)
+
+print("\nQuery:", query)
+
+print("\nRetrieved Context:\n")
+print(context)
+
+print("\nGenerated Prompt:\n")
+print(prompt)
+
+print("\nAnswer:\n")
+print(answer)
+
+print("\nSources:")
+
+sources = set()
+
+for result in results:
+    sources.add(result["source"])
+
+for source in sources:
+    print("-", source)
