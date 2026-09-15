@@ -1,6 +1,6 @@
 import numpy as np
 
-def retrieve_chunk(query_embedding, index, chunks, top_k=3):
+def retrieve_chunk(query_embedding, index, chunks, top_k=3, max_distance=1.2):
     query_embedding = np.array(
         [query_embedding],
         dtype="float32"
@@ -14,6 +14,9 @@ def retrieve_chunk(query_embedding, index, chunks, top_k=3):
     retrieved_chunks = []
 
     for distance, index_position in zip(distances[0], indices[0]):
+
+        if distance > max_distance:
+            continue
 
         chunk = chunks[index_position]
         retrieved_chunks.append(

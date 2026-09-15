@@ -15,7 +15,7 @@ embeddings = create_embeddings(chunks)
 index = create_faiss_index(embeddings)
 
 
-query = "What is overfitting?"
+query = "How are transformers used in large language models?"
 query_embedding = create_query_embeddings(query)
 
 results = retrieve_chunk(
