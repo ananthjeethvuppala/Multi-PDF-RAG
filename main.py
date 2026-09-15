@@ -6,57 +6,122 @@ from modules.retriever import retrieve_chunk
 from modules.prompts import create_prompt
 from modules.llm import generate_answer
 
+# --------------------------------------------------
+# 1. Load PDF documents
+# --------------------------------------------------
+
 documents = load_pdfs("documents")
+print(f"\nLoaded {len(documents)} PDF documents.")
+
+# --------------------------------------------------
+# 2. Create chunks
+# --------------------------------------------------
 
 chunks = chunks_documents(documents)
+print(f"Created {len(chunks)} chunks.")
+
+# --------------------------------------------------
+# 3. Create embeddings
+# --------------------------------------------------
 
 embeddings = create_embeddings(chunks)
+print(f"Embedding shape: {embeddings.shape}")
+
+# --------------------------------------------------
+# 4. Create FAISS index
+# --------------------------------------------------
 
 index = create_faiss_index(embeddings)
+print(f"FAISS index contains {index.ntotal} vectors.")
 
+# --------------------------------------------------
+# 5. Get query from user
+# --------------------------------------------------
 
-query = "How are transformers used in large language models?"
-query_embedding = create_query_embeddings(query)
+print("\n" + "=" * 60)
+print("MULTI-PDF RAG ASSISTANT")
+print("=" * 60)
 
-results = retrieve_chunk(
-    query_embedding,
-    index,
-    chunks,
-    top_k=3
-)
+print("Ask questions about your PDF documents.")
+print("Type 'exit' to quit.")
 
-context = ""
+while True:
 
-for result in results:
-    context += f"""
-Source: {result["source"]}
+    query = input("\nYou: ").strip()
 
-{result["text"]}
+    if query.lower() in ["exit", "quit"]:
+        print("\nExiting Multi-PDF RAG Assistant...")
+        break
 
----------------------------------------------------------------------
-"""
+    if not query:
+        print("Please enter a question.")
+        continue
 
-prompt = create_prompt(context, query)
+    # --------------------------------------------------
+    # Create query embedding
+    # --------------------------------------------------
 
-answer = generate_answer(prompt)
+    query_embedding = create_query_embeddings(query)
 
-print("\nQuery:", query)
+    # --------------------------------------------------
+    # Retrieve relevant chunks
+    # --------------------------------------------------
 
-print("\nRetrieved Context:\n")
-print(context)
+    results = retrieve_chunk(
+        query_embedding,
+        index,
+        chunks,
+        top_k=3
+    )
 
-print("\nGenerated Prompt:\n")
-print(prompt)
+    # --------------------------------------------------
+    # Check if anything was retrieved
+    # --------------------------------------------------
 
-print("\nAnswer:\n")
-print(answer)
+    if not results:
+        print("\nAssistant: I could not find relevant information in the provided documnets.")
+        continue
 
-print("\nSources:")
+    # --------------------------------------------------
+    # Build context
+    # --------------------------------------------------
 
-sources = set()
+    context = ""
 
-for result in results:
-    sources.add(result["source"])
+    for result in results:
+        context += f"""
+    Source: {result["source"]}
 
-for source in sources:
-    print("-", source)
+    {result["text"]}
+
+    ---------------------------------------------------------------------
+    """
+
+    # --------------------------------------------------
+    # Create prompt
+    # --------------------------------------------------
+
+    prompt = create_prompt(context, query)
+
+    # --------------------------------------------------
+    # Generate answer
+    # --------------------------------------------------
+
+    answer = generate_answer(prompt)
+
+    # --------------------------------------------------
+    # Display answer
+    # --------------------------------------------------
+
+    print("\nAssistant:")
+    print(answer)
+
+    sources = set()
+
+    for result in results:
+        sources.add(result["source"])
+
+    print("\nSources:")
+    
+    for source in sources:
+        print("-", source)
